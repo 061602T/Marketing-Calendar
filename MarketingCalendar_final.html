@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NYC Bar — Marketing Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1a2e4a;--gold2:#d4a843;--bg:#f4f5f7;--white:#fff;--border:#e2e5ec;--text:#1a2032;--text2:#5a6278;--text3:#9aa0b2;--radius:8px;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+.topbar{background:var(--navy);height:50px;display:flex;align-items:center;padding:0 16px;gap:0;position:relative;z-index:100}
+.topbar-logo{color:#fff;font-size:13px;font-weight:500;margin-right:16px;white-space:nowrap}
+.topbar-logo span{color:var(--gold2);font-weight:300}
+.view-tabs{display:flex;gap:1px;flex:1;overflow-x:auto;scrollbar-width:none}
+.view-tabs::-webkit-scrollbar{display:none}
+.vtab{background:none;border:none;color:rgba(255,255,255,.55);font-family:inherit;font-size:12px;font-weight:500;padding:5px 12px;border-radius:6px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0}
+.vtab:hover{background:rgba(255,255,255,.1);color:#fff}
+.vtab.active{background:rgba(255,255,255,.18);color:#fff}
+.vtab svg{width:13px;height:13px;flex-shrink:0}
+.vtab-del{opacity:0;font-size:14px;margin-left:2px;line-height:1;padding:0 2px;border-radius:3px;transition:opacity .1s}
+.vtab:hover .vtab-del{opacity:.6}
+.vtab-del:hover{opacity:1 !important;background:rgba(255,255,255,.2)}
+.add-view-btn{background:none;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.65);font-family:inherit;font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;flex-shrink:0;margin-left:6px}
+.add-view-btn:hover{border-color:rgba(255,255,255,.5);color:#fff}
+.app{display:flex;height:calc(100vh - 50px)}
+.sidebar{width:220px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sb-sect{padding:12px 14px;border-bottom:1px solid var(--border)}
+.sb-label{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
+.sb-search{position:relative}
+.sb-search input{width:100%;padding:6px 10px 6px 26px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:12px;color:var(--text);background:var(--bg);outline:none;transition:border .15s}
+.sb-search input:focus{border-color:var(--navy)}
+.sb-ico{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;pointer-events:none}
+.sb-filters{display:flex;flex-direction:column;gap:1px}
+.sb-btn{display:flex;align-items:center;justify-content:space-between;padding:5px 7px;border-radius:5px;cursor:pointer;font-size:12px;color:var(--text2);border:none;background:none;font-family:inherit;text-align:left;width:100%;transition:all .1s}
+.sb-btn:hover{background:var(--bg);color:var(--text)}
+.sb-btn.active{background:rgba(26,46,74,.08);color:var(--navy);font-weight:500}
+.sb-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.sb-cnt{font-size:10px;color:var(--text3);background:var(--bg);padding:1px 5px;border-radius:8px}
+.sb-owners{display:flex;flex-direction:column;gap:1px;overflow-y:auto;flex:1}
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.cal-hdr{padding:12px 18px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:var(--white);flex-shrink:0}
+.cal-month{font-size:17px;font-weight:500;color:var(--navy);min-width:170px}
+.nav-btn{width:26px;height:26px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:13px;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all .1s}
+.nav-btn:hover{border-color:var(--navy);color:var(--navy)}
+.today-btn{padding:4px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:11px;font-weight:500;color:var(--text2);font-family:inherit;transition:all .1s}
+.today-btn:hover{border-color:var(--navy);color:var(--navy)}
+.hdr-count{margin-left:auto;font-size:11px;color:var(--text3)}
+.scroll{flex:1;overflow-y:auto}
+/* month */
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);border-left:1px solid var(--border);border-top:1px solid var(--border)}
+.dh{padding:6px 0;text-align:center;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--white);position:sticky;top:0;z-index:5}
+.dc{min-height:104px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:5px 4px;background:var(--white)}
+.dc.other{background:#fafbfc}.dc.today{background:#f0f4f9}
+.dn{font-size:11px;font-weight:500;color:var(--text3);width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin-bottom:3px}
+.dc.today .dn{background:var(--navy);color:#fff}
+.ev{font-size:10px;line-height:1.35;border-radius:3px;padding:2px 4px;margin-bottom:2px;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;transition:opacity .1s}
+.ev:hover{opacity:.8}
+.ev-more{font-size:10px;color:var(--text3);padding:1px 4px;cursor:pointer}.ev-more:hover{color:var(--navy)}
+/* week */
+.week-grid{display:grid;grid-template-columns:54px repeat(7,1fr);border-left:1px solid var(--border);border-top:1px solid var(--border)}
+.wh-c{border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--white);position:sticky;top:0;z-index:5}
+.wh{padding:7px 4px;text-align:center;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--white);position:sticky;top:0;z-index:5}
+.wh-day{font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--text3)}
+.wh-num{font-size:17px;font-weight:300;color:var(--text2);line-height:1.1;margin-top:2px}
+.wh-num.t{color:var(--navy);font-weight:500}
+.wtd{width:6px;height:6px;border-radius:50%;background:var(--navy);margin:2px auto 0}
+.wtime{border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--white);padding:5px 4px;text-align:right;font-size:9px;color:var(--text3);font-family:'DM Mono',monospace}
+.wcell{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:3px;background:var(--white);min-height:76px}
+.wcell.wt{background:#f8fafc}
+.wev{font-size:10px;border-radius:3px;padding:2px 5px;margin-bottom:2px;cursor:pointer;line-height:1.35;transition:opacity .1s}
+.wev:hover{opacity:.8}
+.wev-n{font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.wev-s{font-size:9px;opacity:.75;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+/* list */
+.list-wrap{padding:14px 18px}
+.list-table{width:100%;border-collapse:collapse;font-size:12px}
+.list-table th{text-align:left;padding:7px 10px;font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text3);border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;background:var(--white);position:sticky;top:0;z-index:5}
+.list-table th:hover{color:var(--navy)}
+.list-table td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.list-table tr{cursor:pointer}.list-table tr:hover td{background:var(--bg)}
+.lt-badge{display:inline-block;font-size:9px;font-weight:600;padding:2px 5px;border-radius:3px;white-space:nowrap}
+.lt-status{display:inline-block;font-size:9px;padding:2px 6px;border-radius:10px;white-space:nowrap}
+.s-ready{background:#d7f0e4;color:#145a35}.s-prog{background:#fde9c0;color:#6b3d08}.s-draft{background:#eaebee;color:#444}
+/* group */
+.grp-wrap{padding:14px 18px}
+.grp-section{margin-bottom:12px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--white)}
+.grp-head{padding:10px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border)}
+.grp-head:hover{background:var(--bg)}
+.grp-title{font-size:13px;font-weight:500;color:var(--navy);flex:1}
+.grp-meta{font-size:11px;color:var(--text3)}
+.grp-badge{font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px}
+.grp-arrow{font-size:11px;color:var(--text3);transition:transform .15s;flex-shrink:0}
+.grp-arrow.open{transform:rotate(180deg)}
+.grp-rows{display:none}.grp-rows.open{display:block}
+.grp-row{display:flex;align-items:center;gap:10px;padding:7px 14px 7px 32px;border-top:1px solid var(--border);cursor:pointer;transition:background .1s}
+.grp-row:hover{background:var(--bg)}
+.gr-type{font-size:10px;font-weight:600;padding:2px 5px;border-radius:3px;flex-shrink:0;min-width:28px;text-align:center}
+.gr-date{font-size:10px;color:var(--text3);min-width:65px;flex-shrink:0;font-family:'DM Mono',monospace}
+.gr-subj{font-size:11px;color:var(--text2);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.gr-owner{font-size:10px;color:var(--text3);flex-shrink:0}
+/* gallery */
+.gallery-wrap{padding:14px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;align-content:start}
+.gcard{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:11px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:5px}
+.gcard:hover{border-color:var(--navy);box-shadow:0 2px 8px rgba(26,46,74,.1)}
+.gc-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;align-self:flex-start}
+.gc-name{font-size:12px;font-weight:500;color:var(--navy);line-height:1.35}
+.gc-sub{font-size:11px;color:var(--text2);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.gc-foot{display:flex;align-items:center;justify-content:space-between;margin-top:2px}
+.gc-date{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.gc-owner{font-size:10px;color:var(--text3)}
+/* type colors */
+.t-CLE{background:#daeaf8;color:#0c3d6e}.t-NonCLE{background:#d7f0e4;color:#145a35}
+.t-Dues{background:#fde9c0;color:#6b3d08}.t-MemPromo{background:#e9e6fc;color:#3a2888}
+.t-MemBen{background:#d4f0e8;color:#0a4a35}.t-Onboard{background:#fce8e8;color:#7a1a1a}
+.t-Other{background:#eaebee;color:#444}
+/* drawer */
+.overlay{position:fixed;inset:0;background:rgba(26,46,74,.22);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;right:0;top:50px;bottom:0;width:348px;background:var(--white);border-left:1px solid var(--border);z-index:201;transform:translateX(100%);transition:transform .2s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+.drawer.open{transform:translateX(0)}
+.dr-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:8px}
+.dr-badge{font-size:9px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;padding:2px 7px;border-radius:3px;flex-shrink:0;margin-top:2px}
+.dr-title{font-size:13px;font-weight:500;color:var(--navy);line-height:1.4;flex:1}
+.dr-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:17px;line-height:1;padding:2px;flex-shrink:0}
+.dr-body{flex:1;overflow-y:auto;padding:12px 14px}
+.dr-f{margin-bottom:11px}
+.dr-f label{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:3px}
+.dr-f p{font-size:12px;color:var(--text);line-height:1.5}
+.dr-f p.em{color:var(--text3);font-style:italic}
+.dr-2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.dr-hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+.dli{padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:5px;cursor:pointer;transition:border-color .1s}
+.dli:hover{border-color:var(--navy)}
+.dli-n{font-size:12px;font-weight:500;color:var(--text)}
+.dli-s{font-size:10px;color:var(--text3);margin-top:2px}
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,46,74,.35);z-index:300;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:12px;width:480px;max-width:95vw;box-shadow:0 8px 40px rgba(26,46,74,.2);display:flex;flex-direction:column;max-height:88vh;overflow:hidden}
+.modal-head{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:500;color:var(--navy)}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;line-height:1}
+.modal-body{padding:18px 20px;overflow-y:auto;flex:1}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.m-label{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);margin-bottom:7px;margin-top:14px}
+.m-label:first-child{margin-top:0}
+.m-input{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text);background:var(--white);outline:none;transition:border .15s}
+.m-input:focus{border-color:var(--navy)}
+.layout-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.layout-opt{border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 6px;cursor:pointer;text-align:center;transition:all .15s}
+.layout-opt:hover{border-color:var(--text3)}
+.layout-opt.sel{border-color:var(--navy);background:rgba(26,46,74,.04)}
+.layout-opt svg{width:24px;height:24px;color:var(--text3);margin:0 auto 5px;display:block}
+.layout-opt.sel svg{color:var(--navy)}
+.layout-opt p{font-size:11px;font-weight:500;color:var(--text2)}
+.layout-opt.sel p{color:var(--navy)}
+.group-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.group-opt{border:1px solid var(--border);border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px;color:var(--text2);transition:all .15s}
+.group-opt:hover{border-color:var(--text3)}
+.group-opt.sel{border-color:var(--navy);background:rgba(26,46,74,.04);color:var(--navy);font-weight:500}
+.sort-row{display:flex;gap:8px}
+.sort-row .m-input{flex:1}
+.btn{padding:7px 14px;border-radius:var(--radius);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--text2)}
+.btn-ghost:hover{border-color:var(--navy);color:var(--navy)}
+.btn-primary{background:var(--navy);border:1px solid var(--navy);color:#fff}
+.btn-primary:hover{background:#243d61}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">NYC Bar <span>/ Marketing</span></div>
+  <div class="view-tabs" id="view-tabs"></div>
+  <button class="add-view-btn" onclick="openBuilder()">
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="2"><path d="M5.5 1v9M1 5.5h9"/></svg>Add view
+  </button>
+</div>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sb-sect">
+      <div class="sb-search">
+        <span class="sb-ico">⌕</span>
+        <input type="text" id="search" placeholder="Search programs…" oninput="applyFilters()">
+      </div>
+    </div>
+    <div class="sb-sect" style="flex:1;overflow-y:auto;display:flex;flex-direction:column">
+      <div class="sb-label">Program Type</div>
+      <div class="sb-filters" id="type-filters"></div>
+      <div class="sb-label" style="margin-top:12px">Owner</div>
+      <div class="sb-owners" id="owner-filters"></div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="cal-hdr" id="cal-hdr">
+      <span class="cal-month" id="cal-month"></span>
+      <div style="display:flex;gap:3px">
+        <button class="nav-btn" onclick="navBack()">&#8249;</button>
+        <button class="today-btn" onclick="navToday()">Today</button>
+        <button class="nav-btn" onclick="navForward()">&#8250;</button>
+      </div>
+      <span class="hdr-count" id="hdr-count"></span>
+    </div>
+    <div class="scroll"><div id="view-render"></div></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="dr-head">
+    <span class="dr-badge" id="dr-badge"></span>
+    <span class="dr-title" id="dr-title"></span>
+    <button class="dr-close" onclick="closeDrawer()">&#215;</button>
+  </div>
+  <div class="dr-body" id="dr-body"></div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="modal-title">Add new view</span>
+      <button class="modal-close" onclick="closeBuilder()">&#215;</button>
+    </div>
+    <div class="modal-body">
+      <div class="m-label">View name</div>
+      <input class="m-input" id="vb-name" placeholder="e.g. CLEs This Month, By Owner, Ready to Go…">
+      <div class="m-label">Layout</div>
+      <div class="layout-grid" id="layout-grid">
+        <div class="layout-opt sel" data-layout="month" onclick="selLayout(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 8h20M7 3v3M17 3v3M7 12h2v2H7zM11 12h2v2h-2zM15 12h2v2h-2z"/></svg><p>Month</p>
+        </div>
+        <div class="layout-opt" data-layout="week" onclick="selLayout(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 8h20M7 3v3M17 3v3M8 8v13M12 8v13M16 8v13"/></svg><p>Week</p>
+        </div>
+        <div class="layout-opt" data-layout="list" onclick="selLayout(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M3 12h18M3 18h12"/></svg><p>List</p>
+        </div>
+        <div class="layout-opt" data-layout="group" onclick="selLayout(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="5" rx="1.5"/><rect x="2" y="11" width="20" height="5" rx="1.5"/><rect x="2" y="19" width="14" height="3" rx="1.5"/></svg><p>Grouped</p>
+        </div>
+        <div class="layout-opt" data-layout="gallery" onclick="selLayout(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="9" height="9" rx="1.5"/><rect x="13" y="2" width="9" height="9" rx="1.5"/><rect x="2" y="13" width="9" height="9" rx="1.5"/><rect x="13" y="13" width="9" height="9" rx="1.5"/></svg><p>Gallery</p>
+        </div>
+      </div>
+      <div id="group-section" style="display:none">
+        <div class="m-label">Group by</div>
+        <div class="group-grid" id="group-grid">
+          <div class="group-opt sel" data-g="ProgramName" onclick="selGroup(this)">Program name</div>
+          <div class="group-opt" data-g="ProgramType" onclick="selGroup(this)">Program type</div>
+          <div class="group-opt" data-g="Owner" onclick="selGroup(this)">Owner</div>
+          <div class="group-opt" data-g="ProjectStatus" onclick="selGroup(this)">Status</div>
+          <div class="group-opt" data-g="EmailType" onclick="selGroup(this)">Email type</div>
+          <div class="group-opt" data-g="none" onclick="selGroup(this)">No grouping</div>
+        </div>
+      </div>
+      <div class="m-label">Sort by</div>
+      <div class="sort-row">
+        <select class="m-input" id="vb-sort">
+          <option value="EmailSendDate">Send date</option>
+          <option value="ProgramName">Program name</option>
+          <option value="ProgramType">Program type</option>
+          <option value="Owner">Owner</option>
+          <option value="ProjectStatus">Status</option>
+        </select>
+        <select class="m-input" style="width:90px" id="vb-dir">
+          <option value="1">Asc &#8593;</option>
+          <option value="-1">Desc &#8595;</option>
+        </select>
+      </div>
+      <div class="m-label">Filter to type (optional)</div>
+      <select class="m-input" id="vb-type">
+        <option value="">All types</option>
+        <option>CLE</option><option>Non CLE Program</option><option>Dues Email</option>
+        <option>Membership Promotion</option><option>Membership Benefit</option>
+        <option>Member Onboarding</option><option>Lawyers Connect Enews</option>
+        <option>Monthly Programs</option><option>SLF News</option><option>Job Flash</option>
+      </select>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeBuilder()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveView()">Create view</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const TYPE_META={'CLE':{label:'CLE',cls:'t-CLE',dot:'#378add'},'Non CLE Program':{label:'Non CLE',cls:'t-NonCLE',dot:'#639922'},'Dues Email':{label:'Dues',cls:'t-Dues',dot:'#ba7517'},'Membership Promotion':{label:'Mem Promo',cls:'t-MemPromo',dot:'#7f77dd'},'Membership Benefit':{label:'Mem Benefit',cls:'t-MemBen',dot:'#1d9e75'},'Member Onboarding':{label:'Onboarding',cls:'t-Onboard',dot:'#d85a30'}};
+function tm(t){return TYPE_META[t]||{label:t||'Other',cls:'t-Other',dot:'#888780'};}
+
+let views=[
+  {id:'month',  name:'Month',      layout:'month',  group:'none',        sort:'EmailSendDate',dir:1,typeFilter:'',builtin:true},
+  {id:'week',   name:'Week',       layout:'week',   group:'none',        sort:'EmailSendDate',dir:1,typeFilter:'',builtin:true},
+  {id:'list',   name:'List',       layout:'list',   group:'none',        sort:'EmailSendDate',dir:1,typeFilter:'',builtin:true},
+  {id:'program',name:'By Program', layout:'group',  group:'ProgramName', sort:'EmailSendDate',dir:1,typeFilter:'',builtin:true},
+];
+let activeViewId='month',editingViewId=null;
+let allEvents=[],filtered=[],curDate=new Date(),activeType=null,activeOwner=null,sortCol='EmailSendDate',sortDir=1;
+
+function parseDate(s){if(!s) return null;const p=s.split('/');if(p.length===3) return new Date(+p[2],+p[0]-1,+p[1]);return null;}
+function scls(s){if(!s) return 's-draft';const l=s.toLowerCase();if(l.includes('ready')) return 's-ready';if(l.includes('progress')) return 's-prog';return 's-draft';}
+function encEv(ev){return "'"+JSON.stringify(ev).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;')+"'";}
+
+const ICONS={
+  month:'<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1.5" width="12" height="11" rx="1.5"/><path d="M1 5h12M4 1.5v2M10 1.5v2"/></svg>',
+  week:'<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1.5" width="12" height="11" rx="1.5"/><path d="M1 5h12M4.5 5v7.5M9.5 5v7.5"/></svg>',
+  list:'<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3.5h10M2 7h10M2 10.5h6"/></svg>',
+  group:'<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="12" height="3.5" rx="1"/><rect x="1" y="6" width="12" height="3.5" rx="1"/><rect x="1" y="11" width="8" height="2" rx="1"/></svg>',
+  gallery:'<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="5.5" height="5.5" rx="1"/><rect x="7.5" y="1" width="5.5" height="5.5" rx="1"/><rect x="1" y="7.5" width="5.5" height="5.5" rx="1"/><rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1"/></svg>',
+};
+
+function renderTabs(){
+  const c=document.getElementById('view-tabs');c.innerHTML='';
+  views.forEach(v=>{
+    const btn=document.createElement('button');
+    btn.className='vtab'+(v.id===activeViewId?' active':'');
+    const del=v.builtin?'':'<span class="vtab-del" onclick="deleteView(event,\''+v.id+'\')">&#215;</span>';
+    btn.innerHTML=(ICONS[v.layout]||ICONS.list)+v.name+del;
+    btn.onclick=(e)=>{if(e.target.classList.contains('vtab-del')) return;switchView(v.id);};
+    c.appendChild(btn);
+  });
+}
+
+function switchView(id){activeViewId=id;renderTabs();applyFilters();}
+
+function buildSidebar(){
+  const tc={};allEvents.forEach(e=>{tc[e.ProgramType]=(tc[e.ProgramType]||0)+1;});
+  const tf=document.getElementById('type-filters');tf.innerHTML='';
+  const all=document.createElement('button');all.className='sb-btn'+(activeType===null?' active':'');
+  all.innerHTML='<span>All types</span><span class="sb-cnt">'+allEvents.length+'</span>';
+  all.onclick=()=>{activeType=null;buildSidebar();applyFilters();};tf.appendChild(all);
+  Object.entries(tc).sort((a,b)=>b[1]-a[1]).forEach(([type,cnt])=>{
+    const m=tm(type);const b=document.createElement('button');
+    b.className='sb-btn'+(activeType===type?' active':'');
+    b.innerHTML='<span style="display:flex;align-items:center;gap:5px"><span class="sb-dot" style="background:'+m.dot+'"></span>'+m.label+'</span><span class="sb-cnt">'+cnt+'</span>';
+    b.onclick=()=>{activeType=activeType===type?null:type;buildSidebar();applyFilters();};tf.appendChild(b);
+  });
+  const owners=[...new Set(allEvents.map(e=>e.Owner).filter(Boolean))].sort();
+  const of=document.getElementById('owner-filters');of.innerHTML='';
+  const allO=document.createElement('button');allO.className='sb-btn'+(activeOwner===null?' active':'');
+  allO.textContent='All owners';allO.onclick=()=>{activeOwner=null;buildSidebar();applyFilters();};of.appendChild(allO);
+  owners.forEach(o=>{const b=document.createElement('button');b.className='sb-btn'+(activeOwner===o?' active':'');b.textContent=o;b.onclick=()=>{activeOwner=activeOwner===o?null:o;buildSidebar();applyFilters();};of.appendChild(b);});
+}
+
+function applyFilters(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const v=views.find(x=>x.id===activeViewId)||views[0];
+  filtered=allEvents.filter(e=>{
+    if(activeType&&e.ProgramType!==activeType) return false;
+    if(activeOwner&&e.Owner!==activeOwner) return false;
+    if(v.typeFilter&&e.ProgramType!==v.typeFilter) return false;
+    if(q&&!(e.ProgramName||'').toLowerCase().includes(q)&&!(e.Title||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  renderView();
+}
+
+function renderView(){
+  const v=views.find(x=>x.id===activeViewId)||views[0];
+  const needHdr=v.layout==='month'||v.layout==='week';
+  document.getElementById('cal-hdr').style.display=needHdr?'flex':'none';
+  if(v.layout==='month') renderMonth(v);
+  else if(v.layout==='week') renderWeek(v);
+  else if(v.layout==='list') renderList(v);
+  else if(v.layout==='group') renderGroup(v);
+  else if(v.layout==='gallery') renderGallery(v);
+}
+
+function sortedFiltered(v){
+  const col=v.sort||'EmailSendDate';const dir=v.dir||1;
+  return [...filtered].sort((a,b)=>{
+    let av=a[col]||'',bv=b[col]||'';
+    if(col==='EmailSendDate'){av=parseDate(av)||new Date(0);bv=parseDate(bv)||new Date(0);return dir*(av-bv);}
+    return dir*String(av).localeCompare(String(bv));
+  });
+}
+
+function navBack(){const v=views.find(x=>x.id===activeViewId);if(v&&v.layout==='week') curDate.setDate(curDate.getDate()-7);else curDate.setMonth(curDate.getMonth()-1);renderView();}
+function navForward(){const v=views.find(x=>x.id===activeViewId);if(v&&v.layout==='week') curDate.setDate(curDate.getDate()+7);else curDate.setMonth(curDate.getMonth()+1);renderView();}
+function navToday(){curDate=new Date();renderView();}
+
+function renderMonth(v){
+  const y=curDate.getFullYear(),m=curDate.getMonth();
+  document.getElementById('cal-month').textContent=MONTHS[m]+' '+y;
+  const byDay={};let cnt=0;
+  filtered.forEach(e=>{const d=parseDate(e.EmailSendDate);if(!d||d.getFullYear()!==y||d.getMonth()!==m) return;cnt++;const k=d.getDate();if(!byDay[k]) byDay[k]=[];byDay[k].push(e);});
+  document.getElementById('hdr-count').textContent=cnt+' email'+(cnt!==1?'s':'')+' this month';
+  const g=document.getElementById('view-render');g.innerHTML='';
+  const grid=document.createElement('div');grid.className='month-grid';
+  DAYS.forEach(d=>{const h=document.createElement('div');h.className='dh';h.textContent=d;grid.appendChild(h);});
+  const fd=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),pdim=new Date(y,m,0).getDate();
+  const today=new Date(),total=Math.ceil((fd+dim)/7)*7;
+  for(let i=0;i<total;i++){
+    const cell=document.createElement('div');let dn,cur=true;
+    if(i<fd){dn=pdim-fd+i+1;cur=false;cell.className='dc other';}
+    else if(i>=fd+dim){dn=i-fd-dim+1;cur=false;cell.className='dc other';}
+    else{dn=i-fd+1;cell.className='dc'+(today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===dn?' today':'');}
+    const num=document.createElement('div');num.className='dn';num.textContent=dn;cell.appendChild(num);
+    if(cur&&byDay[dn]){
+      byDay[dn].slice(0,3).forEach(ev=>{const el=document.createElement('div');el.className='ev '+tm(ev.ProgramType).cls;el.textContent=(ev.ProgramName||ev.Title||'')+(ev.EmailType?' \xb7 '+ev.EmailType:'');el.title=ev.Title||'';el.onclick=()=>openDrawer(ev);cell.appendChild(el);});
+      if(byDay[dn].length>3){const more=document.createElement('div');more.className='ev-more';more.textContent='+'+(byDay[dn].length-3)+' more';more.onclick=()=>openDayList(byDay[dn],dn,m,y);cell.appendChild(more);}
+    }
+    grid.appendChild(cell);
+  }
+  g.appendChild(grid);
+}
+
+function renderWeek(v){
+  const dow=curDate.getDay();const ws=new Date(curDate);ws.setDate(curDate.getDate()-dow);
+  const we=new Date(ws);we.setDate(ws.getDate()+6);
+  const fmt=d=>(d.getMonth()+1)+'/'+d.getDate();
+  document.getElementById('cal-month').textContent=fmt(ws)+' \u2014 '+fmt(we)+', '+we.getFullYear();
+  const days=Array.from({length:7},(_,i)=>{const d=new Date(ws);d.setDate(ws.getDate()+i);return d;});
+  const byDay={};let cnt=0;
+  filtered.forEach(e=>{const d=parseDate(e.EmailSendDate);if(!d) return;days.forEach((wd,i)=>{if(d.toDateString()===wd.toDateString()){cnt++;if(!byDay[i]) byDay[i]=[];byDay[i].push(e);}});});
+  document.getElementById('hdr-count').textContent=cnt+' email'+(cnt!==1?'s':'')+' this week';
+  const g=document.getElementById('view-render');g.innerHTML='';
+  const grid=document.createElement('div');grid.className='week-grid';
+  const corner=document.createElement('div');corner.className='wh-c';grid.appendChild(corner);
+  const today=new Date();
+  days.forEach(wd=>{const h=document.createElement('div');h.className='wh';const isT=wd.toDateString()===today.toDateString();h.innerHTML='<div class="wh-day">'+DAYS[wd.getDay()]+'</div><div class="wh-num'+(isT?' t':'')+'">'+wd.getDate()+'</div>'+(isT?'<div class="wtd"></div>':'');grid.appendChild(h);});
+  ['Morning','Afternoon','Evening'].forEach((slot,si)=>{
+    const tc=document.createElement('div');tc.className='wtime';tc.textContent=slot;grid.appendChild(tc);
+    days.forEach((_,di)=>{
+      const cell=document.createElement('div');cell.className='wcell'+(days[di].toDateString()===today.toDateString()?' wt':'');
+      if(byDay[di]){const slotEvs=byDay[di].filter((_,idx)=>idx%3===si);slotEvs.forEach(ev=>{const el=document.createElement('div');el.className='wev '+tm(ev.ProgramType).cls;el.innerHTML='<div class="wev-n">'+(ev.ProgramName||ev.Title||'')+'</div><div class="wev-s">'+(ev.EmailType||'')+' '+(ev.Owner?'\xb7 '+ev.Owner:'')+'</div>';el.onclick=()=>openDrawer(ev);cell.appendChild(el);});}
+      grid.appendChild(cell);
+    });
+  });
+  g.appendChild(grid);
+}
+
+function renderList(v){
+  const data=sortedFiltered(v);
+  const cols=[{k:'EmailSendDate',l:'Send Date',w:'82px'},{k:'Title',l:'Content Name',w:'200px'},{k:'ProgramName',l:'Program',w:'160px'},{k:'ProgramType',l:'Type',w:'90px'},{k:'EmailType',l:'Email #',w:'62px'},{k:'Owner',l:'Owner',w:'100px'},{k:'SubjectLine',l:'Subject Line',w:'185px'},{k:'ProjectStatus',l:'Status',w:'82px'}];
+  const sc=sortCol,sd=sortDir;
+  document.getElementById('view-render').innerHTML='<div class="list-wrap"><table class="list-table"><thead><tr>'+cols.map(c=>'<th style="min-width:'+c.w+'" onclick="sortList(\''+c.k+'\',event)">'+c.l+'<span style="font-size:9px;margin-left:3px;opacity:.5">'+(sc===c.k?(sd===1?'\u2191':'\u2193'):'\u2195')+'</span></th>').join('')+'</tr></thead><tbody>'+data.map(ev=>{const m=tm(ev.ProgramType);return '<tr onclick="openDrawer('+encEv(ev)+')"><td style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text3)">'+(ev.EmailSendDate||'\u2014')+'</td><td style="max-width:200px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px">'+(ev.Title||'')+'</td><td style="max-width:160px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px">'+(ev.ProgramName||'')+'</td><td><span class="lt-badge '+m.cls+'">'+m.label+'</span></td><td style="color:var(--text3);font-size:11px">'+(ev.EmailType||'\u2014')+'</td><td style="font-size:11px">'+(ev.Owner||'\u2014')+'</td><td style="max-width:185px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px;color:var(--text2)">'+(ev.SubjectLine||'\u2014')+'</td><td><span class="lt-status '+scls(ev.ProjectStatus)+'">'+(ev.ProjectStatus||'\u2014')+'</span></td></tr>';}).join('')+'</tbody></table></div>';
+}
+function sortList(col,e){e&&e.stopPropagation();sortDir=sortCol===col?-sortDir:1;sortCol=col;const v=views.find(x=>x.id===activeViewId);if(v){v.sort=col;v.dir=sortDir;}renderList(v||{sort:col,dir:sortDir});}
+
+function renderGroup(v){
+  const data=sortedFiltered(v);const gf=v.group||'ProgramName';
+  const groups={};
+  data.forEach(e=>{const k=e[gf]||'(none)';if(!groups[k]) groups[k]={type:e.ProgramType,items:[]};groups[k].items.push(e);});
+  const sortedGroups=Object.entries(groups).sort((a,b)=>{
+    if(gf==='EmailSendDate'){const ad=parseDate(a[1].items[0].EmailSendDate)||new Date(0);const bd=parseDate(b[1].items[0].EmailSendDate)||new Date(0);return ad-bd;}
+    return a[0].localeCompare(b[0]);
+  });
+  const g=document.getElementById('view-render');
+  g.innerHTML='<div class="grp-wrap">'+sortedGroups.map(([key,data],gi)=>{
+    const m=gf==='ProgramType'?tm(key):tm(data.type);
+    return '<div class="grp-section"><div class="grp-head" onclick="toggleGrp('+gi+')"><span class="grp-badge '+m.cls+'">'+m.label+'</span><span class="grp-title">'+key+'</span><span class="grp-meta">'+data.items.length+' email'+(data.items.length!==1?'s':'')+'</span><span class="grp-arrow" id="ga-'+gi+'">\u25be</span></div><div class="grp-rows" id="gr-'+gi+'">'+data.items.map(ev=>'<div class="grp-row" onclick="openDrawer('+encEv(ev)+')"><span class="gr-type '+tm(ev.ProgramType).cls+'">'+(ev.EmailType||'\u2014')+'</span><span class="gr-date">'+(ev.EmailSendDate||'\u2014')+'</span><span class="gr-subj">'+(ev.SubjectLine||ev.Title||'\u2014')+'</span><span class="gr-owner">'+(ev.Owner||'')+'</span><span><span class="lt-status '+scls(ev.ProjectStatus)+'">'+(ev.ProjectStatus||'')+'</span></span></div>').join('')+'</div></div>';
+  }).join('')+'</div>';
+}
+function toggleGrp(i){const r=document.getElementById('gr-'+i);const a=document.getElementById('ga-'+i);const o=r.classList.toggle('open');a.classList.toggle('open',o);}
+
+function renderGallery(v){
+  const data=sortedFiltered(v);
+  document.getElementById('view-render').innerHTML='<div class="gallery-wrap">'+data.map(ev=>{const m=tm(ev.ProgramType);return '<div class="gcard" onclick="openDrawer('+encEv(ev)+')" ><span class="gc-badge '+m.cls+'">'+m.label+(ev.EmailType?' \xb7 '+ev.EmailType:'')+'</span><div class="gc-name">'+(ev.ProgramName||ev.Title||'')+'</div>'+(ev.SubjectLine?'<div class="gc-sub">'+ev.SubjectLine+'</div>':'')+'<div class="gc-foot"><span class="gc-date">'+(ev.EmailSendDate||'\u2014')+'</span><span class="gc-owner">'+(ev.Owner||'')+'</span></div></div>';}).join('')+'</div>';
+}
+
+function openDrawer(ev){
+  if(typeof ev==='string') ev=JSON.parse(ev.replace(/&quot;/g,'"'));
+  const m=tm(ev.ProgramType);
+  const b=document.getElementById('dr-badge');b.textContent=m.label;b.style.background=m.dot+'22';b.style.color=m.dot;
+  document.getElementById('dr-title').textContent=ev.Title||ev.ProgramName||'';
+  const f=(l,v,full)=>'<div class="dr-f"><label>'+l+'</label><p class="'+(v?'':'em')+'"'+(full?'':' style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis"')+'>'+(v||'\u2014')+'</p></div>';
+  document.getElementById('dr-body').innerHTML=f('Program name',ev.ProgramName)+'<div class="dr-2">'+f('Program type',ev.ProgramType)+f('Email type',ev.EmailType)+'</div><div class="dr-2">'+f('Send date',ev.EmailSendDate)+f('Status',ev.ProjectStatus)+'</div><hr class="dr-hr">'+f('Subject line',ev.SubjectLine,true)+f('From line',ev.FromLine)+f('Preview text',ev.PreviewText)+'<hr class="dr-hr"><div class="dr-2">'+f('Owner',ev.Owner)+f('RM name',ev.RMName)+'</div>'+f('Target audience',ev.TargetAudience)+f('Notes',ev.Notes,true);
+  document.getElementById('overlay').classList.add('open');document.getElementById('drawer').classList.add('open');
+}
+function openDayList(evs,day,month,year){
+  document.getElementById('dr-badge').textContent=MONTHS[month]+' '+day;
+  document.getElementById('dr-badge').style.cssText='background:#eaebee;color:#444';
+  document.getElementById('dr-title').textContent=evs.length+' emails';
+  document.getElementById('dr-body').innerHTML=evs.map(ev=>'<div class="dli" onclick="openDrawer('+encEv(ev)+')"><div class="dli-n">'+(ev.ProgramName||ev.Title||'')+'</div><div class="dli-s">'+(ev.ProgramType||'')+' '+(ev.EmailType?'\xb7 '+ev.EmailType:'')+' '+(ev.Owner?'\xb7 '+ev.Owner:'')+'</div></div>').join('');
+  document.getElementById('overlay').classList.add('open');document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){document.getElementById('overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');}
+
+let selLayoutVal='month',selGroupVal='ProgramName';
+function openBuilder(editId){
+  editingViewId=editId||null;
+  const v=editId?views.find(x=>x.id===editId):null;
+  document.getElementById('modal-title').textContent=v?'Edit view':'Add new view';
+  document.getElementById('vb-name').value=v?v.name:'';
+  selLayoutVal=v?v.layout:'month';selGroupVal=v?(v.group||'ProgramName'):'ProgramName';
+  document.getElementById('vb-sort').value=v?v.sort:'EmailSendDate';
+  document.getElementById('vb-dir').value=v?String(v.dir):'1';
+  document.getElementById('vb-type').value=v?v.typeFilter:'';
+  document.querySelectorAll('.layout-opt').forEach(el=>el.classList.toggle('sel',el.dataset.layout===selLayoutVal));
+  document.querySelectorAll('.group-opt').forEach(el=>el.classList.toggle('sel',el.dataset.g===selGroupVal));
+  updateGroupSection();
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('vb-name').focus(),100);
+}
+function closeBuilder(){document.getElementById('modal-overlay').classList.remove('open');editingViewId=null;}
+function selLayout(el){selLayoutVal=el.dataset.layout;document.querySelectorAll('.layout-opt').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');updateGroupSection();}
+function selGroup(el){selGroupVal=el.dataset.g;document.querySelectorAll('.group-opt').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');}
+function updateGroupSection(){document.getElementById('group-section').style.display=(selLayoutVal==='group'||selLayoutVal==='gallery')?'block':'none';}
+function saveView(){
+  const name=document.getElementById('vb-name').value.trim();
+  if(!name){document.getElementById('vb-name').style.borderColor='#e24b4a';return;}
+  document.getElementById('vb-name').style.borderColor='';
+  const cfg={id:editingViewId||(Date.now().toString(36)),name,layout:selLayoutVal,group:(selLayoutVal==='group'||selLayoutVal==='gallery')?selGroupVal:'none',sort:document.getElementById('vb-sort').value,dir:parseInt(document.getElementById('vb-dir').value),typeFilter:document.getElementById('vb-type').value,builtin:false};
+  if(editingViewId){const idx=views.findIndex(x=>x.id===editingViewId);if(idx>=0) views[idx]=cfg;}else{views.push(cfg);}
+  activeViewId=cfg.id;closeBuilder();renderTabs();applyFilters();
+}
+function deleteView(e,id){e.stopPropagation();if(!confirm('Delete this view?')) return;views=views.filter(v=>v.id!==id);if(activeViewId===id) activeViewId=views[0].id;renderTabs();applyFilters();}
+
+const SITE_URL='https://abcny-my.sharepoint.com/personal/tblum_nycbar_org',LIST_NAME='Marketing Calendar 051226',CLIENT_ID='ec4483a6-d963-4bab-b445-a653b04e022f',TENANT_ID='a0d43880-6bd4-48e5-bbd2-70ddca48c2b6';
+async function loadData(){try{const token=await getToken();const siteId=await getSiteId(token);allEvents=await getListItems(token,siteId);}catch(e){console.warn('Using sample data:',e.message);allEvents=SAMPLE;}buildSidebar();applyFilters();}
+async function getToken(){if(typeof msal==='undefined') throw new Error('no msal');const app=new msal.PublicClientApplication({auth:{clientId:CLIENT_ID,authority:'https://login.microsoftonline.com/'+TENANT_ID}});const req={scopes:['https://graph.microsoft.com/Sites.Read.All']};try{return (await app.acquireTokenSilent(req)).accessToken;}catch{return (await app.acquireTokenPopup(req)).accessToken;}}
+async function getSiteId(token){const host=new URL(SITE_URL).host,path=new URL(SITE_URL).pathname;return (await(await fetch('https://graph.microsoft.com/v1.0/sites/'+host+':'+path,{headers:{Authorization:'Bearer '+token}})).json()).id;}
+async function getListItems(token,siteId){const fields='Title,ProgramName,ProgramType,EmailType,EmailSendDate,Owner,SubjectLine,ProjectStatus,FromLine,TargetAudience,RMName,Notes,PreviewText';let url='https://graph.microsoft.com/v1.0/sites/'+siteId+'/lists/'+LIST_NAME+'/items?expand=fields(select='+fields+')&$top=999',items=[];while(url){const r=await(await fetch(url,{headers:{Authorization:'Bearer '+token}})).json();items=items.concat(r.value.map(i=>i.fields));url=r['@odata.nextLink']||null;}return items;}
+
+const SAMPLE=[
+  {Title:'2/18 - Current Legal Ethical Issues - EM1',ProgramName:'Current Legal Ethical Issues with Prof. Gillers',EmailType:'EM1',Owner:'Daniella Zelikman',ProgramType:'CLE',SubjectLine:'Ethics CLE: Register Now',EmailSendDate:'02/03/2025',ProjectStatus:'Ready to Go',FromLine:'citybarevents@nycbar.org',RMName:'Gillers 2025 E1',Notes:'',TargetAudience:'PG + Comm',PreviewText:'Earn 2 CLE credits'},
+  {Title:'2/18 - Current Legal Ethical Issues - EM2',ProgramName:'Current Legal Ethical Issues with Prof. Gillers',EmailType:'EM2',Owner:'Daniella Zelikman',ProgramType:'CLE',SubjectLine:'Last Chance: Ethics CLE Feb 18',EmailSendDate:'02/14/2025',ProjectStatus:'Ready to Go',FromLine:'citybarevents@nycbar.org',RMName:'Gillers 2025 E2',Notes:'',TargetAudience:'PG + Comm',PreviewText:''},
+  {Title:'2/24 - Blue Hill Troupe - EM1',ProgramName:'An Evening of Music with the Blue Hill Troupe',EmailType:'EM1',Owner:'Jalen Martin',ProgramType:'Non CLE Program',SubjectLine:'Join Us for an Evening of Music',EmailSendDate:'02/10/2025',ProjectStatus:'Ready to Go',FromLine:'citybarevents@nycbar.org',RMName:'Blue Hill E1',Notes:'Cross promote with upcoming events',TargetAudience:'Members + Non Members',PreviewText:''},
+  {Title:'2/24 - Blue Hill Troupe - EM2',ProgramName:'An Evening of Music with the Blue Hill Troupe',EmailType:'EM2',Owner:'Jalen Martin',ProgramType:'Non CLE Program',SubjectLine:'This Monday: Blue Hill Troupe',EmailSendDate:'02/19/2025',ProjectStatus:'Ready to Go',FromLine:'citybarevents@nycbar.org',RMName:'Blue Hill E2',Notes:'',TargetAudience:'Members + Non Members',PreviewText:''},
+  {Title:'Dues - 1PP',ProgramName:'Dues',EmailType:'1PP',Owner:'Alberto Ruiz',ProgramType:'Dues Email',SubjectLine:'Renew Your Membership Today',EmailSendDate:'02/03/2025',ProjectStatus:'Ready to Go',FromLine:'membership@nycbar.org',RMName:'',Notes:'',TargetAudience:'1PP Members',PreviewText:''},
+  {Title:'Dues - 2PP',ProgramName:'Dues',EmailType:'2PP',Owner:'Alberto Ruiz',ProgramType:'Dues Email',SubjectLine:"Don't Lose Your Member Benefits",EmailSendDate:'02/10/2025',ProjectStatus:'In Progress',FromLine:'membership@nycbar.org',RMName:'',Notes:'',TargetAudience:'2PP Members',PreviewText:''},
+  {Title:'Dues - 3PP',ProgramName:'Dues',EmailType:'3PP',Owner:'Alberto Ruiz',ProgramType:'Dues Email',SubjectLine:'Final Notice: Membership Renewal',EmailSendDate:'02/17/2025',ProjectStatus:'In Progress',FromLine:'membership@nycbar.org',RMName:'',Notes:'',TargetAudience:'3PP Members',PreviewText:''},
+  {Title:'Two Free Months - EM1',ProgramName:'Two Free Months',EmailType:'EM1',Owner:'Trevor Blum',ProgramType:'Membership Promotion',SubjectLine:'Get 2 Free Months of Membership',EmailSendDate:'02/05/2025',ProjectStatus:'Ready to Go',FromLine:'membership@nycbar.org',RMName:'',Notes:'',TargetAudience:'Former Members',PreviewText:''},
+  {Title:'Two Free Months - EM2',ProgramName:'Two Free Months',EmailType:'EM2',Owner:'Trevor Blum',ProgramType:'Membership Promotion',SubjectLine:'Last Chance: 2 Free Months',EmailSendDate:'02/12/2025',ProjectStatus:'In Progress',FromLine:'membership@nycbar.org',RMName:'',Notes:'',TargetAudience:'Former Members',PreviewText:''},
+  {Title:'Member Benefits - LawPay',ProgramName:'Member Benefits - LawPay',EmailType:'',Owner:'Victoria Klioutchnikov',ProgramType:'Membership Benefit',SubjectLine:'Exclusive Savings on LawPay',EmailSendDate:'02/06/2025',ProjectStatus:'Ready to Go',FromLine:'benefits@nycbar.org',RMName:'',Notes:'',TargetAudience:'All Members',PreviewText:''},
+  {Title:'3/7 - Employment Law Institute - EM1',ProgramName:'Employment Law Institute',EmailType:'EM1',Owner:'Daniella Zelikman',ProgramType:'CLE',SubjectLine:'Employment Law Institute - Register Now',EmailSendDate:'02/14/2025',ProjectStatus:'In Progress',FromLine:'citybarevents@nycbar.org',RMName:'Employment Law E1',Notes:'',TargetAudience:'PG: Labor, Employment',PreviewText:''},
+  {Title:'3/7 - Employment Law Institute - EM2',ProgramName:'Employment Law Institute',EmailType:'EM2',Owner:'Daniella Zelikman',ProgramType:'CLE',SubjectLine:'Employment Law Institute - Next Week',EmailSendDate:'02/24/2025',ProjectStatus:'In Progress',FromLine:'citybarevents@nycbar.org',RMName:'Employment Law E2',Notes:'',TargetAudience:'PG: Labor, Employment',PreviewText:''},
+  {Title:'New Year Promo',ProgramName:'New Year Promo',EmailType:'',Owner:'Trevor Blum',ProgramType:'Membership Promotion',SubjectLine:'Start 2025 with a City Bar Membership',EmailSendDate:'02/01/2025',ProjectStatus:'Ready to Go',FromLine:'membership@nycbar.org',RMName:'',Notes:'',TargetAudience:'Non Members',PreviewText:''},
+  {Title:'Member Benefits - Western Alliance',ProgramName:'Member Benefits - Western Alliance',EmailType:'',Owner:'Victoria Klioutchnikov',ProgramType:'Membership Benefit',SubjectLine:'Banking Benefits for Members',EmailSendDate:'02/20/2025',ProjectStatus:'Ready to Go',FromLine:'benefits@nycbar.org',RMName:'',Notes:'',TargetAudience:'All Members',PreviewText:''},
+  {Title:'5/27 - Milton Handler Lecture - EM1',ProgramName:'The 2025 Milton Handler Lecture on Antitrust',EmailType:'EM1',Owner:'Jalen Martin',ProgramType:'Non CLE Program',SubjectLine:'Mark Your Calendar: Milton Handler Lecture',EmailSendDate:'02/13/2025',ProjectStatus:'In Progress',FromLine:'citybarevents@nycbar.org',RMName:'Milton Handler E1',Notes:'',TargetAudience:'PG: Antitrust',PreviewText:''},
+  {Title:'Dues - 1PP Committee',ProgramName:'Dues',EmailType:'1PP Committee',Owner:'Alberto Ruiz',ProgramType:'Dues Email',SubjectLine:'Committee Members: Renew Now',EmailSendDate:'02/25/2025',ProjectStatus:'Ready to Go',FromLine:'membership@nycbar.org',RMName:'',Notes:'',TargetAudience:'Committee Members',PreviewText:''},
+  {Title:'OCA Promo - EM1',ProgramName:'OCA Promo',EmailType:'EM1',Owner:'Trevor Blum',ProgramType:'Membership Promotion',SubjectLine:'Exclusive Offer for OCA Members',EmailSendDate:'02/26/2025',ProjectStatus:'In Progress',FromLine:'membership@nycbar.org',RMName:'',Notes:'',TargetAudience:'OCA Members',PreviewText:''},
+  {Title:'3/7 - Employment Law Institute - PA1',ProgramName:'Employment Law Institute',EmailType:'PA1',Owner:'Daniella Zelikman',ProgramType:'CLE',SubjectLine:'Past Attendees: Employment Law Institute',EmailSendDate:'02/28/2025',ProjectStatus:'In Progress',FromLine:'citybarevents@nycbar.org',RMName:'Employment Law PA1',Notes:'',TargetAudience:'Past Attendees',PreviewText:''},
+  {Title:'Lawyers Connect Enews - Feb',ProgramName:'Lawyers Connect Enews',EmailType:'',Owner:'Nicholette LeMaitre',ProgramType:'Lawyers Connect Enews',SubjectLine:'Lawyers Connect: February News',EmailSendDate:'02/07/2025',ProjectStatus:'Ready to Go',FromLine:'lawyersconnect@nycbar.org',RMName:'',Notes:'',TargetAudience:'Lawyers Connect Members',PreviewText:''},
+  {Title:'Member Onboarding - Welcome',ProgramName:'Member Onboarding',EmailType:'',Owner:'Alberto Ruiz',ProgramType:'Member Onboarding',SubjectLine:'Welcome to the NYC Bar Association',EmailSendDate:'02/01/2025',ProjectStatus:'Ready to Go',FromLine:'membership@nycbar.org',RMName:'',Notes:'',TargetAudience:'New Members',PreviewText:''},
+];
+
+renderTabs();loadData();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/msal.js/1.4.18/msal.min.js"></script>
+</body>
+</html>
